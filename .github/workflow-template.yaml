@@ -28,16 +28,10 @@ jobs:
           fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
       - uses: ./.github/workflows/actions
       - name: Run Maven Build Command
-        run: mvn clean install -pl {{SERVICE_NAME}} -am
-      - name: Run Maven Checkstyle
-        if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' }}
-        run: mvn checkstyle:checkstyle -pl {{SERVICE_NAME}} -am -Dcheckstyle.output.file={{SERVICE_NAME}}-checkstyle-result.xml
-      - name: Upload Checkstyle Result
-        if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' }}
-        uses: jwgmeligmeyling/checkstyle-github-action@master
-        with:
-          path: '**/**{{SERVICE_NAME}}-checkstyle-result.xml'
-      - name: Test Results
+        run: mvn clean install -DskipTests -f {{SERVICE_NAME}}
+      - name: Run Maven Test
+        run: mvn test -f {{SERVICE_NAME}}
+      - name: Unit Test Results
         uses: dorny/test-reporter@v1
         if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' && (success() || failure()) }}
         with:

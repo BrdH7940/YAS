@@ -37,7 +37,7 @@ jobs:
         if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' }}
         run: mvn checkstyle:checkstyle -pl location -am -Dcheckstyle.output.file=location-checkstyle-result.xml
       - name: Upload Checkstyle Result
-        if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' }}
+        if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' && (github.event_name != 'pull_request' || (github.event.pull_request.head.repo.fork == false && github.actor != 'dependabot[bot]')) }}
         uses: jwgmeligmeyling/checkstyle-github-action@master
         with:
           path: 'location/location-checkstyle-result.xml'

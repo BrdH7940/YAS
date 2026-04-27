@@ -42,7 +42,7 @@ jobs:
         with:
           path: 'storefront-bff/storefront-bff-checkstyle-result.xml'
       - name: Analyze with sonar cloud
-        if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' }}
+        if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' && secrets.SONAR_TOKEN != '' }}
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |

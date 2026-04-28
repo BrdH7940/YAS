@@ -15,6 +15,11 @@ on:
       - ".github/workflows/backoffice-ci.yaml"
   workflow_dispatch:
 
+permissions:
+  contents: read
+  pull-requests: write
+  security-events: write
+
 jobs:
   Build:
     runs-on: ubuntu-latest

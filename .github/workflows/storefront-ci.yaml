@@ -20,7 +20,7 @@ permissions:
   pull-requests: write
 
 jobs:
-  Build:
+  Test:
     runs-on: ubuntu-latest
     env:
       FROM_ORIGINAL_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name == github.repository || github.ref == 'refs/heads/main' }}
@@ -33,11 +33,7 @@ jobs:
           node-version: 20
       - run: npm ci
         working-directory: storefront
-      - run: npm run build
-        working-directory: storefront
-      - run: npm run lint
-        working-directory: storefront
-      - run: npx prettier --check .
+      - run: npm run test -- --coverage
         working-directory: storefront
       - name: SonarCloud Scan
         if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' }}
@@ -48,9 +44,29 @@ jobs:
             -Dsonar.pullrequest.key=${{ github.event.pull_request.number }}
             -Dsonar.pullrequest.branch=${{ github.event.pull_request.head.ref }}
             -Dsonar.pullrequest.base=${{ github.event.pull_request.base.ref }}
+            -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Needed to get PR information, if any
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          
+  Build:
+    needs: Test
+    runs-on: ubuntu-latest
+    env:
+      FROM_ORIGINAL_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name == github.repository || github.ref == 'refs/heads/main' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+        working-directory: storefront
+      - run: npm run build
+        working-directory: storefront
+      - run: npm run lint
+        working-directory: storefront
+      - run: npx prettier --check .
+        working-directory: storefront
       - name: Log in to the Container registry
         if: ${{ github.ref == 'refs/heads/main' }}
         uses: docker/login-action@v3

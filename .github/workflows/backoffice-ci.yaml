@@ -38,6 +38,13 @@ jobs:
       - run: npm audit --omit=dev
         continue-on-error: true
         working-directory: backoffice
+      - name: Snyk Dependency Scan
+        if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' && secrets.SNYK_TOKEN != '' }}
+        uses: snyk/actions/node@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --file=backoffice/package.json --severity-threshold=high
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@0.24.0
         with:

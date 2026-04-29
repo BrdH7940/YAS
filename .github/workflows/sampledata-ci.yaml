@@ -17,18 +17,31 @@ on:
       - "pom.xml"
   workflow_dispatch:
 
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+
 jobs:
   Build:
     runs-on: ubuntu-latest
     env:
       FROM_ORIGINAL_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name == github.repository || github.ref == 'refs/heads/main' }}
+      SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0 # Shallow clones should be disabled for a better relevancy of analysis
       - uses: ./.github/workflows/actions
+      - name: Cache Maven packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
       - name: Run Maven Build Command
-        run: mvn clean install -pl sampledata -am
+        run: mvn clean install -pl sampledata -am -U
       - name: Run Maven Checkstyle
         if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' }}
         run: mvn checkstyle:checkstyle -pl sampledata -am -Dcheckstyle.output.file=sampledata-checkstyle-result.xml
@@ -36,27 +49,52 @@ jobs:
         if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' }}
         uses: jwgmeligmeyling/checkstyle-github-action@master
         with:
-          path: '**/sampledata-checkstyle-result.xml'
+          path: "**/sampledata-checkstyle-result.xml"
       - name: Analyze with sonar cloud
         if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' }}
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: mvn org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -f sampledata
-      - name: OWASP Dependency Check
+        run: mvn org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -f sampledata -Dsonar.organization=23122004 -Dsonar.projectKey=23122004_DevOps-Project01 -Dsonar.host.url=https://sonarcloud.io
+      - name: OWASP Dependency Check (attempt 1)
+        id: owasp_scan_1
         if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' }}
-        uses: dependency-check/Dependency-Check_Action@main
+        continue-on-error: true
+        uses: dependency-check/Dependency-Check_Action@1.1.0
         env:
           JAVA_HOME: /opt/jdk
         with:
-          project: 'yas'
-          path: '.'
-          format: 'HTML'
+          project: "yas"
+          path: "."
+          format: "HTML"
+      - name: OWASP Dependency Check (attempt 2)
+        id: owasp_scan_2
+        if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' && steps.owasp_scan_1.outcome == 'failure' }}
+        continue-on-error: true
+        uses: dependency-check/Dependency-Check_Action@1.1.0
+        env:
+          JAVA_HOME: /opt/jdk
+        with:
+          project: "yas"
+          path: "."
+          format: "HTML"
+      - name: Fail when OWASP scan retries are exhausted
+        if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' && steps.owasp_scan_1.outcome == 'failure' && steps.owasp_scan_2.outcome == 'failure' }}
+        run: |
+          echo "OWASP Dependency Check failed after 2 attempts."
+          exit 1
       - name: Upload OWASP Dependency Check results
-        if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' }}
+        if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' && (success() || failure()) }}
         uses: actions/upload-artifact@master
         with:
           name: OWASP Dependency Check Report
           path: ${{github.workspace}}/reports
+      - name: Snyk Dependency Scan
+        if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' && env.SNYK_TOKEN != '' }}
+        uses: snyk/actions/maven@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --file=sampledata/pom.xml --severity-threshold=high
       - name: Log in to the Container registry
         if: ${{ github.ref == 'refs/heads/main' }}
         uses: docker/login-action@v3

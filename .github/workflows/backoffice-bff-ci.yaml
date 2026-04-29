@@ -82,7 +82,7 @@ jobs:
         if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' && env.SNYK_TOKEN != '' }}
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        run: snyk test --file=backoffice-bff/pom.xml --severity-threshold=high
+        run: snyk test --file=backoffice-bff/pom.xml --severity-threshold=high --maven-skip-wrapper
       - name: Log in to the Container registry
         if: ${{ github.ref == 'refs/heads/main' }}
         uses: docker/login-action@v3

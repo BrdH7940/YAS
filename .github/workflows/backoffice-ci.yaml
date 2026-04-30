@@ -56,6 +56,10 @@ jobs:
         uses: SonarSource/sonarcloud-github-action@master
         with:
           projectBaseDir: backoffice
+          args: >
+            -Dsonar.organization=23122004
+            -Dsonar.projectKey=23122004_DevOps-Project01
+            -Dsonar.host.url=https://sonarcloud.io
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Needed to get PR information, if any
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

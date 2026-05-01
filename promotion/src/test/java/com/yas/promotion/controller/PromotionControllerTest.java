@@ -369,7 +369,7 @@ class PromotionControllerTest {
     @Test
     void testUpdateUsagePromotion_whenValidRequest_thenReturnOk() throws Exception {
         List<PromotionUsageVm> usageVms = List.of(
-            new PromotionUsageVm("code1", 1L, 100L)
+            new PromotionUsageVm("code1", 1L, "test-user", 100L)
         );
 
         String request = objectWriter.writeValueAsString(usageVms);

@@ -21,6 +21,7 @@ import com.yas.promotion.viewmodel.ProductVm;
 import com.yas.promotion.viewmodel.PromotionDetailVm;
 import com.yas.promotion.viewmodel.PromotionListVm;
 import com.yas.promotion.viewmodel.PromotionPostVm;
+import com.yas.promotion.viewmodel.PromotionPutVm;
 import com.yas.promotion.viewmodel.PromotionUsageVm;
 import com.yas.promotion.viewmodel.PromotionVerifyVm;
 import java.time.Instant;
@@ -469,7 +470,7 @@ class PromotionServiceTest {
         promotion = promotionRepository.save(promotion);
 
         List<PromotionUsageVm> usageVms = List.of(
-            new PromotionUsageVm("usage-test-code", 1L, 100L)
+            new PromotionUsageVm("usage-test-code", 1L, "test-user", 100L)
         );
 
         promotionService.updateUsagePromotion(usageVms);
@@ -483,7 +484,7 @@ class PromotionServiceTest {
         setUpSecurityContext("test-user");
 
         List<PromotionUsageVm> usageVms = List.of(
-            new PromotionUsageVm("non-existent-code", 1L, 100L)
+            new PromotionUsageVm("non-existent-code", 1L, "test-user", 100L)
         );
 
         NotFoundException exception = assertThrows(NotFoundException.class,

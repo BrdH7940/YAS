@@ -40,6 +40,7 @@ import com.yas.promotion.viewmodel.PromotionDetailVm;
 import com.yas.promotion.viewmodel.PromotionListVm;
 import com.yas.promotion.viewmodel.PromotionPostVm;
 import com.yas.promotion.viewmodel.PromotionPutVm;
+import com.yas.promotion.viewmodel.PromotionUsageVm;
 
 @WebMvcTest(controllers = PromotionController.class,
     excludeAutoConfiguration = OAuth2ResourceServerAutoConfiguration.class)
@@ -363,6 +364,44 @@ class PromotionControllerTest {
         ResponseEntity<PromotionVerifyResultDto> response = promotionController.verifyPromotion(promotionVerifyInfo);
 
         assertEquals(expectedResult, response.getBody());
+    }
+
+    @Test
+    void testUpdateUsagePromotion_whenValidRequest_thenReturnOk() throws Exception {
+        PromotionUsageVm usageVm = new PromotionUsageVm("CODE1", 1L, "user1", 100L);
+        List<PromotionUsageVm> usageVms = List.of(usageVm);
+
+        doNothing().when(promotionService).updateUsagePromotion(usageVms);
+
+        String request = objectWriter.writeValueAsString(usageVms);
+
+        mockMvc.perform(MockMvcRequestBuilders.post("/storefront/promotions/updateUsage")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(request))
+            .andExpect(MockMvcResultMatchers.status().isOk());
+    }
+
+    @Test
+    void testVerifyPromotion_whenValidRequest_thenReturnOk() throws Exception {
+        PromotionVerifyVm promotionVerifyInfo = new PromotionVerifyVm(
+            "COUPON1",
+            100000L,
+            List.of(1L, 2L)
+        );
+
+        PromotionVerifyResultDto expectedResult = new PromotionVerifyResultDto(
+            true, 1L, "COUPON1", DiscountType.PERCENTAGE, 10L
+        );
+
+        when(promotionService.verifyPromotion(any(PromotionVerifyVm.class))).thenReturn(expectedResult);
+
+        String request = objectWriter.writeValueAsString(promotionVerifyInfo);
+
+        mockMvc.perform(MockMvcRequestBuilders.post("/backoffice/promotions/verify")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(request))
+            .andExpect(MockMvcResultMatchers.status().isOk())
+            .andExpect(MockMvcResultMatchers.content().json(objectWriter.writeValueAsString(expectedResult)));
     }
 
     private static @NotNull PromotionPutVm getPromotionPutVm() {

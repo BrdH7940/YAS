@@ -78,7 +78,10 @@ describe('TaxClassService', () => {
 
   it('deletes tax class with non-204 status', async () => {
     const json = vi.fn().mockResolvedValue({ detail: 'tax class in use' });
-    vi.mocked(apiClientService.delete).mockResolvedValue({ status: 409, json } as unknown as Response);
+    vi.mocked(apiClientService.delete).mockResolvedValue({
+      status: 409,
+      json,
+    } as unknown as Response);
 
     const result = await deleteTaxClass(7);
 

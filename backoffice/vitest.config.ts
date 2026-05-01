@@ -1,4 +1,4 @@
-import { defineConfig } from 'vitest/config'
+import { defineConfig } from 'vitest/config';
 import path from 'path';
 import react from '@vitejs/plugin-react';
 
@@ -11,13 +11,7 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
-      exclude: [
-        'pages/**', 
-        '**/*.test.ts', 
-        '**/*.test.tsx', 
-        'next.config.js',
-        '**/models/**',
-      ],
+      exclude: ['pages/**', '**/*.test.ts', '**/*.test.tsx', 'next.config.js', '**/models/**'],
     },
   },
   resolve: {
@@ -28,4 +22,4 @@ export default defineConfig({
       '@webhookModels': path.resolve(__dirname, './modules/webhook/models'),
     },
   },
-})
+});

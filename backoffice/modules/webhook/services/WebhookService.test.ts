@@ -67,7 +67,10 @@ describe('WebhookService', () => {
 
   it('deletes webhook with non-204 status and returns error payload', async () => {
     const json = vi.fn().mockResolvedValue({ detail: 'cannot delete' });
-    vi.mocked(apiClientService.delete).mockResolvedValue({ status: 400, json } as unknown as Response);
+    vi.mocked(apiClientService.delete).mockResolvedValue({
+      status: 400,
+      json,
+    } as unknown as Response);
 
     const result = await deleteWebhook(8);
 

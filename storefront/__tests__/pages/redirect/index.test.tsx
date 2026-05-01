@@ -14,7 +14,7 @@ vi.mock('@/modules/catalog/services/ProductService', () => ({
 
 import { useRouter } from 'next/router';
 import { getProductSlug } from '@/modules/catalog/services/ProductService';
-import RedirectPage from './index';
+import RedirectPage from '../../../pages/redirect';
 
 describe('RedirectPage', () => {
   beforeEach(() => {

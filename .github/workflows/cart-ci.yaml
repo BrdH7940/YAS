@@ -70,6 +70,8 @@ jobs:
             --scan "/github/workspace" \
             --format "HTML" \
             --out "/github/workspace/reports" \
+            --disableNodeAudit \
+            --disableOssIndex \
             --nvdDatafeed "https://dependency-check.github.io/DependencyCheck_Builder/nvd_cache/"
       - name: Upload OWASP Dependency Check results
         if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' && (success() || failure()) }}

@@ -1,5 +1,6 @@
 package com.yas.promotion.service;
 
+import static com.yas.promotion.util.SecurityContextUtils.setUpSecurityContext;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -9,15 +10,18 @@ import com.yas.commonlibrary.exception.NotFoundException;
 import com.yas.promotion.PromotionApplication;
 import com.yas.promotion.model.Promotion;
 import com.yas.promotion.model.PromotionApply;
+import com.yas.promotion.model.PromotionUsage;
 import com.yas.promotion.model.enumeration.ApplyTo;
 import com.yas.promotion.model.enumeration.DiscountType;
 import com.yas.promotion.model.enumeration.UsageType;
 import com.yas.promotion.repository.PromotionRepository;
+import com.yas.promotion.repository.PromotionUsageRepository;
 import com.yas.promotion.utils.Constants;
 import com.yas.promotion.viewmodel.ProductVm;
 import com.yas.promotion.viewmodel.PromotionDetailVm;
 import com.yas.promotion.viewmodel.PromotionListVm;
 import com.yas.promotion.viewmodel.PromotionPostVm;
+import com.yas.promotion.viewmodel.PromotionUsageVm;
 import com.yas.promotion.viewmodel.PromotionVerifyVm;
 import java.time.Instant;
 import java.time.ZonedDateTime;
@@ -37,6 +41,8 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 class PromotionServiceTest {
     @Autowired
     private PromotionRepository promotionRepository;
+    @Autowired
+    private PromotionUsageRepository promotionUsageRepository;
     @MockitoBean
     private ProductService productService;
     @Autowired
@@ -348,5 +354,141 @@ class PromotionServiceTest {
                 2L
             )
         );
+    }
+
+    @Test
+    void deletePromotion_WhenPromotionNotInUse_DeletesSuccessfully() {
+        promotionService.deletePromotion(promotion1.getId());
+    }
+
+    @Test
+    void deletePromotion_WhenPromotionInUse_ThrowsBadRequestException() {
+        Promotion promotionInUse = Promotion.builder()
+            .name("Promotion In Use")
+            .slug("promotion-in-use")
+            .description("Description")
+            .couponCode("code-in-use")
+            .discountType(DiscountType.PERCENTAGE)
+            .discountAmount(100L)
+            .discountPercentage(10L)
+            .isActive(true)
+            .startDate(Instant.now())
+            .endDate(Instant.now().plus(30, ChronoUnit.DAYS))
+            .applyTo(ApplyTo.BRAND)
+            .minimumOrderPurchaseAmount(0L)
+            .build();
+
+        var promotionApply = PromotionApply.builder()
+            .promotion(promotionInUse)
+            .brandId(1L).build();
+        promotionInUse.setPromotionApplies(List.of(promotionApply));
+
+        promotionInUse = promotionRepository.save(promotionInUse);
+
+        PromotionUsage usage = PromotionUsage.builder()
+            .promotion(promotionInUse)
+            .userId("user1")
+            .productId(1L)
+            .orderId(1L)
+            .build();
+        promotionUsageRepository.save(usage);
+
+        BadRequestException exception = assertThrows(BadRequestException.class,
+            () -> promotionService.deletePromotion(promotionInUse.getId()));
+        assertEquals(String.format(Constants.ErrorCode.PROMOTION_IN_USE_ERROR_MESSAGE, promotionInUse.getId()),
+            exception.getMessage());
+    }
+
+    @Test
+    void updatePromotion_WhenPromotionNotFound_ThrowsNotFoundException() {
+        PromotionPutVm promotionPutVm = PromotionPutVm.builder()
+            .id(999L)
+            .name("Updated Promotion")
+            .slug("updated-promotion")
+            .description("Updated Description")
+            .couponCode("updated-code")
+            .discountType(DiscountType.FIXED)
+            .discountAmount(500L)
+            .discountPercentage(50L)
+            .isActive(true)
+            .startDate(Date.from(Instant.now().plus(60, ChronoUnit.DAYS)))
+            .endDate(Date.from(Instant.now().plus(90, ChronoUnit.DAYS)))
+            .applyTo(ApplyTo.PRODUCT)
+            .productIds(List.of(1L, 2L, 3L))
+            .build();
+
+        NotFoundException exception = assertThrows(NotFoundException.class,
+            () -> promotionService.updatePromotion(promotionPutVm));
+        assertEquals(String.format(Constants.ErrorCode.PROMOTION_NOT_FOUND, 999L), exception.getMessage());
+    }
+
+    @Test
+    void updatePromotion_WhenValidRequest_UpdatesSuccessfully() {
+        PromotionPutVm promotionPutVm = PromotionPutVm.builder()
+            .id(promotion1.getId())
+            .name("Updated Promotion")
+            .slug("updated-promotion")
+            .description("Updated Description")
+            .couponCode("updated-code")
+            .discountType(DiscountType.FIXED)
+            .discountAmount(500L)
+            .discountPercentage(50L)
+            .isActive(true)
+            .startDate(Date.from(Instant.now().plus(60, ChronoUnit.DAYS)))
+            .endDate(Date.from(Instant.now().plus(90, ChronoUnit.DAYS)))
+            .applyTo(ApplyTo.PRODUCT)
+            .productIds(List.of(1L, 2L, 3L))
+            .build();
+
+        PromotionDetailVm result = promotionService.updatePromotion(promotionPutVm);
+
+        assertEquals("updated-promotion", result.slug());
+        assertEquals("Updated Promotion", result.name());
+        assertEquals("updated-code", result.couponCode());
+    }
+
+    @Test
+    void updateUsagePromotion_WhenValidData_UpdatesSuccessfully() {
+        setUpSecurityContext("test-user");
+
+        Promotion promotion = Promotion.builder()
+            .name("Usage Test Promotion")
+            .slug("usage-test-promotion")
+            .description("Test")
+            .couponCode("usage-test-code")
+            .discountType(DiscountType.PERCENTAGE)
+            .discountPercentage(10L)
+            .isActive(true)
+            .startDate(Instant.now())
+            .endDate(Instant.now().plus(30, ChronoUnit.DAYS))
+            .applyTo(ApplyTo.PRODUCT)
+            .usageType(UsageType.UNLIMITED)
+            .usageCount(0)
+            .minimumOrderPurchaseAmount(0L)
+            .build();
+        promotion = promotionRepository.save(promotion);
+
+        List<PromotionUsageVm> usageVms = List.of(
+            new PromotionUsageVm("usage-test-code", 1L, 100L)
+        );
+
+        promotionService.updateUsagePromotion(usageVms);
+
+        Promotion updatedPromotion = promotionRepository.findById(promotion.getId()).orElseThrow();
+        assertEquals(1, updatedPromotion.getUsageCount());
+    }
+
+    @Test
+    void updateUsagePromotion_WhenPromotionNotFound_ThrowsNotFoundException() {
+        setUpSecurityContext("test-user");
+
+        List<PromotionUsageVm> usageVms = List.of(
+            new PromotionUsageVm("non-existent-code", 1L, 100L)
+        );
+
+        NotFoundException exception = assertThrows(NotFoundException.class,
+            () -> promotionService.updateUsagePromotion(usageVms));
+        assertEquals(String.format(Constants.ErrorCode.PROMOTION_NOT_FOUND, "non-existent-code"),
+            exception.getMessage());
     }
 }

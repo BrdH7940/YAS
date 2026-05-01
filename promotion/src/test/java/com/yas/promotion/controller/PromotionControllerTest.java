@@ -40,6 +40,7 @@ import com.yas.promotion.viewmodel.PromotionDetailVm;
 import com.yas.promotion.viewmodel.PromotionListVm;
 import com.yas.promotion.viewmodel.PromotionPostVm;
 import com.yas.promotion.viewmodel.PromotionPutVm;
+import com.yas.promotion.viewmodel.PromotionUsageVm;
 
 @WebMvcTest(controllers = PromotionController.class,
     excludeAutoConfiguration = OAuth2ResourceServerAutoConfiguration.class)
@@ -363,6 +364,55 @@ class PromotionControllerTest {
         ResponseEntity<PromotionVerifyResultDto> response = promotionController.verifyPromotion(promotionVerifyInfo);
 
         assertEquals(expectedResult, response.getBody());
+    }
+
+    @Test
+    void testUpdateUsagePromotion_whenValidRequest_thenReturnOk() throws Exception {
+        List<PromotionUsageVm> usageVms = List.of(
+            new PromotionUsageVm("code1", 1L, 100L)
+        );
+
+        String request = objectWriter.writeValueAsString(usageVms);
+
+        this.mockMvc.perform(post("/backoffice/promotions/updateUsage")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(request))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void testVerifyPromotion_storefrontEndpoint_whenValidRequest_thenReturnOk() throws Exception {
+        PromotionVerifyVm promotionVerifyInfo = new PromotionVerifyVm(
+            "coupon-code-1",
+            100000L,
+            List.of(1L)
+        );
+        PromotionVerifyResultDto expectedResult = new PromotionVerifyResultDto(
+            true,
+            1L,
+            "coupon-code-1",
+            DiscountType.FIXED,
+            10000L
+        );
+
+        when(promotionService.verifyPromotion(promotionVerifyInfo)).thenReturn(expectedResult);
+
+        String request = objectWriter.writeValueAsString(promotionVerifyInfo);
+
+        this.mockMvc.perform(post("/storefront/promotions/verify")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(request))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void testGetPromotion_whenNotFound_thenReturnNotFound() throws Exception {
+        when(promotionService.getPromotion(999L)).thenThrow(
+            new com.yas.commonlibrary.exception.NotFoundException("Promotion 999 is not found"));
+
+        this.mockMvc.perform(MockMvcRequestBuilders.get("/backoffice/promotions/{promotionId}", 999L)
+                .contentType(MediaType.APPLICATION_JSON))
+            .andExpect(MockMvcResultMatchers.status().isNotFound());
     }
 
     private static @NotNull PromotionPutVm getPromotionPutVm() {

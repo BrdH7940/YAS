@@ -3,6 +3,7 @@ package com.yas.promotion.service;
 import static com.yas.promotion.util.SecurityContextUtils.setUpSecurityContext;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -217,5 +218,87 @@ class ProductServiceTest {
                 2L
             )
         );
+    }
+
+    @Test
+    void testGetProductByIds_whenCircuitBreakerFallsBack_throwsException() {
+        List<Long> ids = List.of(1L);
+        RuntimeException exception = new RuntimeException("Circuit breaker fallback");
+
+        ProductService spyProductService = Mockito.spy(productService);
+        doThrow(exception).when(spyProductService).handleFallback(any(), any(Throwable.class));
+
+        assertThrows(RuntimeException.class, () -> {
+            try {
+                spyProductService.getProductByIds(ids);
+            } catch (RuntimeException e) {
+                throw e;
+            }
+        });
+    }
+
+    @Test
+    void testGetProductByIds_whenRestClientThrowsException_propagatesException() {
+        List<Long> ids = List.of(1L);
+
+        RestClient.RequestHeadersUriSpec requestHeadersUriSpec = Mockito.mock(RestClient.RequestHeadersUriSpec.class);
+        when(restClient.get()).thenReturn(requestHeadersUriSpec);
+        when(requestHeadersUriSpec.uri(any(URI.class))).thenReturn(requestHeadersUriSpec);
+        when(requestHeadersUriSpec.headers(any())).thenReturn(requestHeadersUriSpec);
+        when(requestHeadersUriSpec.retrieve()).thenThrow(new RuntimeException("Connection error"));
+
+        assertThrows(RuntimeException.class, () -> productService.getProductByIds(ids));
+    }
+
+    @Test
+    void testGetCategoryByIds_whenRestClientThrowsException_propagatesException() {
+        List<Long> ids = List.of(1L);
+
+        RestClient.RequestHeadersUriSpec requestHeadersUriSpec = Mockito.mock(RestClient.RequestHeadersUriSpec.class);
+        when(restClient.get()).thenReturn(requestHeadersUriSpec);
+        when(requestHeadersUriSpec.uri(any(URI.class))).thenReturn(requestHeadersUriSpec);
+        when(requestHeadersUriSpec.headers(any())).thenReturn(requestHeadersUriSpec);
+        when(requestHeadersUriSpec.retrieve()).thenThrow(new RuntimeException("Connection error"));
+
+        assertThrows(RuntimeException.class, () -> productService.getCategoryByIds(ids));
+    }
+
+    @Test
+    void testGetBrandByIds_whenRestClientThrowsException_propagatesException() {
+        List<Long> ids = List.of(1L);
+
+        RestClient.RequestHeadersUriSpec requestHeadersUriSpec = Mockito.mock(RestClient.RequestHeadersUriSpec.class);
+        when(restClient.get()).thenReturn(requestHeadersUriSpec);
+        when(requestHeadersUriSpec.uri(any(URI.class))).thenReturn(requestHeadersUriSpec);
+        when(requestHeadersUriSpec.headers(any())).thenReturn(requestHeadersUriSpec);
+        when(requestHeadersUriSpec.retrieve()).thenThrow(new RuntimeException("Connection error"));
+
+        assertThrows(RuntimeException.class, () -> productService.getBrandByIds(ids));
+    }
+
+    @Test
+    void testGetProductByCategoryIds_whenRestClientThrowsException_propagatesException() {
+        List<Long> ids = List.of(1L);
+
+        RestClient.RequestHeadersUriSpec requestHeadersUriSpec = Mockito.mock(RestClient.RequestHeadersUriSpec.class);
+        when(restClient.get()).thenReturn(requestHeadersUriSpec);
+        when(requestHeadersUriSpec.uri(any(URI.class))).thenReturn(requestHeadersUriSpec);
+        when(requestHeadersUriSpec.headers(any())).thenReturn(requestHeadersUriSpec);
+        when(requestHeadersUriSpec.retrieve()).thenThrow(new RuntimeException("Connection error"));
+
+        assertThrows(RuntimeException.class, () -> productService.getProductByCategoryIds(ids));
+    }
+
+    @Test
+    void testGetProductByBrandIds_whenRestClientThrowsException_propagatesException() {
+        List<Long> ids = List.of(1L);
+
+        RestClient.RequestHeadersUriSpec requestHeadersUriSpec = Mockito.mock(RestClient.RequestHeadersUriSpec.class);
+        when(restClient.get()).thenReturn(requestHeadersUriSpec);
+        when(requestHeadersUriSpec.uri(any(URI.class))).thenReturn(requestHeadersUriSpec);
+        when(requestHeadersUriSpec.headers(any())).thenReturn(requestHeadersUriSpec);
+        when(requestHeadersUriSpec.retrieve()).thenThrow(new RuntimeException("Connection error"));
+
+        assertThrows(RuntimeException.class, () -> productService.getProductByBrandIds(ids));
     }
 }

@@ -30,6 +30,7 @@ class ProductDocumentFormatterTest {
         entityMap.put("name", "Test Product");
 
         Map<String, Object> attr1 = new HashMap<>();
+        attr1.put("id", 1L);
         attr1.put("nameProductAttribute", "Color");
         attr1.put("value", "Red");
         entityMap.put("attributeValues", List.of(attr1));

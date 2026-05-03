@@ -32,7 +32,7 @@ jobs:
           fetch-depth: 0
       - uses: ./.github/workflows/actions
       - name: Run unit tests
-        run: mvn clean test -pl payment-paypal -am
+        run: mvn clean install -pl payment-paypal -am
       - name: Test Results
         uses: dorny/test-reporter@v1
         if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' && (success() || failure()) }}

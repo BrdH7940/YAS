@@ -39,7 +39,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-maven-
       - name: Run unit tests
-        run: mvn clean test -pl sampledata -am -U
+        run: mvn clean install -pl sampledata -am -U
       - name: Test Results
         uses: dorny/test-reporter@v1
         if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' && (success() || failure()) }}

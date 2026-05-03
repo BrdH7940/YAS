@@ -524,7 +524,7 @@ spec:
         enabled: true
         alwaysDisplayInConsole: false
         clientAuthenticatorType: client-secret
-        secret: dev-placeholder-backoffice-bff
+        secret: TVacLC0cQ8tiiEKiTVerTb2YvwQ1TRJF
         redirectUris:
           - {{ .Values.backofficeRedirectUrl }}/*
           - http://localhost:3000/*
@@ -629,7 +629,7 @@ spec:
         enabled: true
         alwaysDisplayInConsole: false
         clientAuthenticatorType: client-secret
-        secret: dev-placeholder-customer-management
+        secret: NKAr3rnjwm9jlakgKpelukZGFaHYqIWE
         redirectUris:
           - ''
         webOrigins: [ ]
@@ -818,7 +818,7 @@ spec:
         enabled: true
         alwaysDisplayInConsole: false
         clientAuthenticatorType: client-secret
-        secret: dev-placeholder-storefront-bff
+        secret: ZrU9I0q2uXBglBnmvyJdkl1lf0ncr8tn
         redirectUris:
           - {{ .Values.storefrontRedirectUrl }}/*
           - http://localhost:8087/*
